@@ -11,6 +11,12 @@
 
     <body>
         <!--Add Nav Bar from Chi game-->
+
+        <!--How to Play Banner for the time being-->
+        <div id="banner">
+            <button id="how-to-play-btn">How to Play</button>
+        </div>
+
         <div id = "container">
             <div id = "title">
                 <h1 class="name">"Words"</h1>
@@ -20,10 +26,11 @@
                 <h3>Streak: </h3>
             </div>
 
-            <div id="board-container">
-                <div id="board"></div>
-            </div>
+                <div id="board-container">
+                    <div id="board"></div>
+                </div>
 
+            
 
             <div id="keyboard-container">
                 <div class="keyboard-row">
@@ -64,8 +71,31 @@
                     <button data-key="m">m</button>
                     <button data-key="del"  class="wide">Del</button>
                 </div>
-
+            
             </div>
         </div>
+
+        <div id="how-to-play-text" class="side-panel hidden">
+            <h3>How to Play "Words"!</h3>
+            <p>Guess the 5-letter secret word in 6 tries or fewer.</p>
+            <p>Try to guess the word in the least number of attempts</p>   
+            <p>Keep the longest daily streak for guessing the word correctly</p>
+            <br>
+            <h4>How to Play</h4>
+            <p>Each guess must be a valid 5-letter English word. Press Enter to submit a guess. 
+            After each guess, the color of the tiles will change to show how close your guess was to the word.</p>
+            <br>
+            <ul>
+                <li>Green: The letter is correct and in the correct position.</li>
+                <li>Yellow: The letter is in the word but in the wrong position.</li>
+                <li>White: The letter is not in the word at all.</li>
+            </ul>
+            <br>
+            <h4>Additional Rules</h4>
+            <p>Letters can be repeated. A letter will only be marked once per position. 
+            For repeated letters, correct placement is prioritized. 
+            You have exactly 6 attempts to guess the word correctly.</p>
+        </div>
+        
     </body>
 </html>

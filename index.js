@@ -6,14 +6,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     handlePhysicalKeyboardInput();
 });
 
+const howToPlayBtn = document.getElementById('how-to-play-btn');
+const howToPlayText = document.getElementById('how-to-play-text');
+
+howToPlayBtn.addEventListener('click', () => {
+    howToPlayText.classList.toggle('visible');
+    howToPlayText.classList.toggle('hidden');
+    
+    if (howToPlayText.classList.contains('visible')) {
+        howToPlayBtn.textContent = "How to Play ▲";
+    } else {
+        howToPlayBtn.textContent = "How to Play ▼";
+    }
+});
+
 let guessedWords = [[]];
 let availableSpace = 1;
 let word = "";
 let guessedWordCount = 0;
 let allowedWords = [];
+let gameOver = false;
+
+//color constants
+const COLOR_CORRECT = "rgb(83, 141, 78)";
+const COLOR_OFF = "rgb(181, 159, 59)";
+const COLOR_WRONG = "rgb(40, 58, 60)";
 
 function loadWords() {
-    return fetch('words.txt')
+    return fetch('WORDS')
         .then(response => response.text())
         .then(text => {
             allowedWords = text.split('\n').map(w => w.trim().toLowerCase());
@@ -117,20 +137,23 @@ function getTileColor(letter, index) {
     const isCorrectLetter = word.includes(letter);
 
     if (!isCorrectLetter) {
-        return "rgb(40, 58, 60)";
+        return COLOR_WRONG;
     }
 
     const letterInThatPosition = word.charAt(index);
     const isCorrectPosition = letter === letterInThatPosition;
 
     if (isCorrectPosition) {
-        return "rgb(83, 141, 78)";
+        return COLOR_CORRECT;
     }
 
-    return "rgb(181, 159, 59)";
+    return COLOR_OFF;
 }
 
 function handleSubmitWord() {
+    if(gameOver){
+        return;
+    }
     const currentWordArr = getCurrentWordArr();
 
     if (currentWordArr.length !== 5) {
@@ -156,6 +179,18 @@ function handleSubmitWord() {
             const letterEl = document.getElementById(letterId);
             letterEl.classList.add("animate__flipInX");
             letterEl.style = `background-color:${tileColor};border-color:${tileColor}`;
+
+            //change on-web keyboard color
+            const keyButton = document.querySelector(`[data-key="${letter}"]`);
+            console.log('Key color:', keyButton);
+            if(keyButton){
+                const keyColor = keyButton.style.backgroundColor;
+
+                if(keyColor !== COLOR_CORRECT){
+                    keyButton.style.backgroundColor = tileColor;
+                    keyButton.style.borderColor = tileColor;
+                }
+            }
         }, interval * index);
     });
 
@@ -163,11 +198,13 @@ function handleSubmitWord() {
 
     if (currentWord === word) {
         window.alert("Congratulations! 🎉");
+        gameOver = true;
         return;
     }
 
     if (guessedWords.length === 6) {
         window.alert(`Sorry, you have no more guesses! The word was "${word}".`);
+        gameOver = true;
         return;
     }
 
