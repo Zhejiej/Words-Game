@@ -45,13 +45,55 @@ h1 {
 }
 
 .square {
-    border: 2px solid gray;
+    border: 2px solid rgb(58, 58, 60);
     min-width: 60px;
     min-height: 60px;
+    font-size: 50px;
+    font-weight: bold;
+    color: black;
+    padding-left: 20%;
+    text-transform: uppercase;
 }
 
 #streak {
     display: flex;
     justify-content: left;
     margin-left: 25%;
+}
+
+#keyboard-container{
+    height: 200px;
+}
+
+.keyboard-row{
+    display: flex;
+    justify-content: center;
+    width: clamp(60%, 70vw, 75%);
+    margin: 0 auto 8px;
+    touch-action: manipulation;
+}
+
+
+.keyboard-row button{
+    font-family: inherit;
+    font-weight: bold;
+    border: 0;
+    padding: 0;
+    height: 58px;
+    cursor: pointer;
+    background-color: rgb(129, 131, 132);
+    color: rgb(215, 218, 220);
+    flex-grow: 1;
+    text-transform: uppercase;
+    margin-right: 6px;
+    border-radius: 4px;
+    user-select: none;
+}
+
+.keyboard-row button.wide{
+    flex-grow: 1.5;
+}
+
+.space{
+    flex-grow: 0.5;
 }
