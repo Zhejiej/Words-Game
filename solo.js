@@ -50,7 +50,7 @@ function getNewWord() {
     const dayIndex = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
     const index = dayIndex % allowedWords.length;
     word = allowedWords[index];
-    window.alert(word);
+    console.log(word);
 
 }
 
@@ -162,7 +162,7 @@ async function isValidWord(word) {
         const response = await fetch(word_url);
 
         if (response.status === 404) {
-            window.alert(`"${word}" not found in dictionary.`);
+            showNotification(`"${word}" Is Not a Valid Word.`);
             return false;
         }
 
@@ -182,7 +182,7 @@ async function handleSubmitWord() {
     const currentWordArr = getCurrentWordArr();
 
     if (currentWordArr.length !== 5) {
-        window.alert("Word must be 5 letters");
+        showNotification("Word must be 5 letters");
         return;
     }
 
@@ -222,7 +222,7 @@ async function handleSubmitWord() {
     guessedWordCount += 1;
 
     if (currentWord === word) {
-        window.alert("Congratulations! 🎉");
+        showNotification("Congratulations! 🎉");
         gameOver = true;
         return;
     }
@@ -234,4 +234,17 @@ async function handleSubmitWord() {
     }
 
     guessedWords.push([]);
+}
+
+
+function showNotification(message, duration = 1000) {
+    const notification = document.getElementById("notification");
+    notification.textContent = message;
+    notification.classList.add("show");
+    notification.classList.remove("hidden");
+
+    setTimeout(() => {
+        notification.classList.remove("show");
+        notification.classList.add("hidden");
+    }, duration);
 }
