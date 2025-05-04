@@ -26,6 +26,7 @@ let word = "";
 let guessedWordCount = 0;
 let allowedWords = [];
 let gameOver = false;
+const url = "https://api.dictionaryapi.dev/api/v2/entries/en/";
 
 //color constants
 const COLOR_CORRECT = "rgb(83, 141, 78)";
@@ -33,7 +34,7 @@ const COLOR_OFF = "rgb(181, 159, 59)";
 const COLOR_WRONG = "rgb(40, 58, 60)";
 
 function loadWords() {
-    return fetch('WORDS')
+    return fetch('WORDS.txt')
         .then(response => response.text())
         .then(text => {
             allowedWords = text.split('\n').map(w => w.trim().toLowerCase());
@@ -44,8 +45,12 @@ function loadWords() {
 }
 
 function getNewWord() {
-    word = allowedWords[Math.floor(Math.random() * allowedWords.length)];
-    console.log("Today's word:", word);
+    const today = new Date();
+    const startDate = new Date('2025-05-03');
+    window.alert(startDate);
+    const dayIndex = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+    const index = dayIndex % allowedWords.length;
+    word = allowedWords[index];
 }
 
 function createSquares() {
@@ -150,7 +155,26 @@ function getTileColor(letter, index) {
     return COLOR_OFF;
 }
 
-function handleSubmitWord() {
+async function isValidWord(word) {
+    const word_url = url + word;
+    try {
+        const response = await fetch(word_url);
+
+        if (response.status === 404) {
+            window.alert(`"${word}" not found in dictionary.`);
+            return false;
+        }
+
+        const json = await response.json();
+        console.log("Dictionary API response:", json);
+        return true;
+    } catch (error) {
+        console.error("Error checking word:", error.message);
+        return false;
+    }
+}
+
+async function handleSubmitWord() {
     if(gameOver){
         return;
     }
@@ -163,8 +187,8 @@ function handleSubmitWord() {
 
     const currentWord = currentWordArr.join("").toLowerCase();
 
-    if (!allowedWords.includes(currentWord)) {
-        window.alert("Word is not recognised!");
+    const valid = await isValidWord(currentWord);
+    if (!valid) {
         return;
     }
 
