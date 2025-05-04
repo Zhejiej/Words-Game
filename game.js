@@ -45,12 +45,8 @@ function loadWords() {
 }
 
 function getNewWord() {
-    const today = new Date();
-    const startDate = new Date('2025-05-03');
-    window.alert(startDate);
-    const dayIndex = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
-    const index = dayIndex % allowedWords.length;
-    word = allowedWords[index];
+    word = allowedWords[Math.floor(Math.random() * allowedWords.length)];
+    window.alert(`Today's Word: ${word}`);
 }
 
 function createSquares() {
