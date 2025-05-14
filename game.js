@@ -12,7 +12,7 @@ const howToPlayText = document.getElementById('how-to-play-text');
 howToPlayBtn.addEventListener('click', () => {
     howToPlayText.classList.toggle('visible');
     howToPlayText.classList.toggle('hidden');
-    
+
     if (howToPlayText.classList.contains('visible')) {
         howToPlayBtn.textContent = "How to Play ▲";
     } else {
@@ -55,7 +55,6 @@ function createSquares() {
     for (let index = 0; index < 30; index++) {
         let square = document.createElement("div");
         square.classList.add("square");
-        square.classList.add("animate__animated");
         square.setAttribute("id", index + 1);
         gameBoard.appendChild(square);
     }
@@ -115,6 +114,8 @@ function updateGuessedWords(letter) {
         const availableSpaceEl = document.getElementById(String(availableSpace));
         availableSpace = availableSpace + 1;
         availableSpaceEl.textContent = letter.toUpperCase();
+        availableSpaceEl.classList.add("pop-in");
+        setTimeout(() => availableSpaceEl.classList.remove("pop-in"), 200);
     }
 }
 
@@ -130,6 +131,10 @@ function handleDeleteLetter() {
 
     const lastLetterEl = document.getElementById(String(availableSpace));
     if (lastLetterEl) {
+        lastLetterEl.classList.add("pop-out");
+        setTimeout(() => {
+            lastLetterEl.classList.remove("pop-out");
+        }, 150);
         lastLetterEl.textContent = "";
     }
 }
@@ -158,6 +163,7 @@ async function isValidWord(word) {
 
         if (response.status === 404) {
             showNotification(`"${word}" Is Not A Valid Word.`);
+            shakeRow(guessedWordCount);
             return false;
         }
 
@@ -171,13 +177,14 @@ async function isValidWord(word) {
 }
 
 async function handleSubmitWord() {
-    if(gameOver){
+    if (gameOver) {
         return;
     }
     const currentWordArr = getCurrentWordArr();
 
     if (currentWordArr.length !== 5) {
         showNotification("Word must be 5 letters");
+        shakeRow(guessedWordCount);
         return;
     }
 
@@ -197,16 +204,15 @@ async function handleSubmitWord() {
 
             const letterId = firstLetterId + index;
             const letterEl = document.getElementById(letterId);
-            letterEl.classList.add("animate__flipInX");
             letterEl.style = `background-color:${tileColor};border-color:${tileColor}`;
 
             //change on-web keyboard color
             const keyButton = document.querySelector(`[data-key="${letter}"]`);
             console.log('Key color:', keyButton);
-            if(keyButton){
+            if (keyButton) {
                 const keyColor = keyButton.style.backgroundColor;
 
-                if(keyColor !== COLOR_CORRECT){
+                if (keyColor !== COLOR_CORRECT) {
                     keyButton.style.backgroundColor = tileColor;
                     keyButton.style.borderColor = tileColor;
                 }
@@ -224,7 +230,7 @@ async function handleSubmitWord() {
         }, 1500);
         return;
     }
-    
+
 
     if (guessedWords.length === 6) {
         showNotification(`The word was "${word}"`);
@@ -241,12 +247,11 @@ async function handleSubmitWord() {
 function showNotification(message, duration = 1000) {
     const notification = document.getElementById("notification");
     notification.textContent = message;
+
     notification.classList.add("show");
-    notification.classList.remove("hidden");
 
     setTimeout(() => {
         notification.classList.remove("show");
-        notification.classList.add("hidden");
     }, duration);
 }
 
@@ -255,6 +260,9 @@ function showEndScreen(won) {
     const endTitle = document.getElementById("end-title");
     const endMessage = document.getElementById("end-message");
     const endGuesses = document.getElementById("end-guesses");
+
+    endScreen.classList.remove("hidden");
+    endScreen.classList.add("visible");
 
     endTitle.textContent = won ? "You Won! 🎉" : "Game Over";
     endMessage.textContent = won ? "Nice job!" : `The word was "${word}"`;
@@ -265,10 +273,15 @@ function showEndScreen(won) {
         row.textContent = guessArr.join("").toUpperCase();
         endGuesses.appendChild(row);
     });
-
-    endScreen.classList.remove("hidden");
 }
-
 document.getElementById("restart-btn").addEventListener("click", () => {
     location.reload();
 });
+
+function shakeRow(rowIndex) {
+    for (let i = 0; i < 5; i++) {
+        const tile = document.getElementById(rowIndex * 5 + i + 1);
+        tile.classList.add("shake");
+        setTimeout(() => tile.classList.remove("shake"), 500);
+    }
+}

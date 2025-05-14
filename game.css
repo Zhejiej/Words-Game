@@ -141,6 +141,15 @@ h1 {
     padding: 1.5rem;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.4s ease, opacity 0.4s ease;
+    transform: translateX(100%);
+    opacity: 0;
+    display: block !important;
+}
+
+.side-panel.visible {
+    transform: translateX(0%);
+    opacity: 1;
 }
 
 .side-panel h2 {
@@ -155,11 +164,19 @@ h1 {
     display: block;
 }
 
-#notification {
+#notification-wrapper {
     position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 40px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* The notification box itself */
+#notification {
+    margin-top: 20px;
     background-color: #1e2a3e;
     color: white;
     padding: 20px 40px;
@@ -167,13 +184,18 @@ h1 {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     font-size: 20px;
     opacity: 0;
+
+    transform: translateY(-30px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
     pointer-events: none;
-    transition: opacity 0.3s ease-in-out;
-    z-index: 1000;
+    max-width: 90%;
+    text-align: center;
 }
 
+/* When shown, fade in + slide down */
 #notification.show {
     opacity: 1;
+    transform: translateY(0);
     pointer-events: auto;
 }
 
@@ -198,25 +220,54 @@ h1 {
     transform: scale(1.05);
 }
 
-.end-screen {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: white;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-    z-index: 999;
-    width: 90%;
-    max-width: 400px;
-    text-align: center;
+@keyframes fadeInOverlay {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
-.end-screen-content {
-    display: flex;
-    flex-direction: column;
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.end-screen {
+    display: none;
+    justify-content: center;
     align-items: center;
+    position: fixed;
+    background: rgba(0, 0, 0, 0.5);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 999;
+    opacity: 0;
+    animation: fadeInOverlay 0.3s ease forwards;
+}
+
+.end-screen.visible {
+    display: flex;
+    animation: fadeInOverlay 0.3s ease forwards;
+}
+
+.end-content {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    animation: fadeInScale 0.4s ease forwards;
 }
 
 #end-guesses {
@@ -243,3 +294,49 @@ h1 {
 #restart-btn:hover {
     background-color: #45a049;
 }
+
+
+/* Letter appears */
+@keyframes popIn {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.pop-in {
+    animation: popIn 0.2s ease forwards;
+}
+
+/* Letter disappears */
+@keyframes popOut {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+}
+
+.pop-out {
+    animation: popOut 0.15s ease forwards;
+}
+
+/* Shake */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-10px); }
+    40%, 80% { transform: translateX(10px); }
+  }
+  
+  .shake {
+    animation: shake 0.5s;
+  }

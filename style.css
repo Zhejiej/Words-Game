@@ -18,7 +18,8 @@ main {
     text-align: center;
 }
 
-.name, .select{
+.name,
+.select {
     display: flex;
     justify-content: center;
 }
