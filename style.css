@@ -71,7 +71,7 @@ h2 {
     background-color: var(--bg-darker);
     padding: 0.5rem 1rem;
     font-size: 1.2rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
     border-radius: 0px;
     font-weight: 500;
     color: var(--text-secondary);
@@ -86,6 +86,7 @@ h2 {
     grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
     gap: 1rem;
     margin-bottom: 1.5rem;
+    margin-top: -2.5rem;
 }
 
 .mode {
@@ -223,4 +224,9 @@ footer {
 
 .name {
     display: inline-block;
+}
+
+/* Add a style for the title container to reduce its bottom margin */
+#title {
+    margin-bottom: 0.5rem;
 }
