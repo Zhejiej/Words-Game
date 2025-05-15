@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", async () => {
+window.addEventListener("load", async () => {
     await loadWords();
     createSquares();
     getNewWord();
@@ -19,7 +19,6 @@ howToPlayBtn.addEventListener('click', () => {
         howToPlayBtn.textContent = "How to Play ▼";
     }
 });
-
 let guessedWords = [[]];
 let availableSpace = 1;
 let word = "";
@@ -45,8 +44,19 @@ function loadWords() {
 }
 
 function getNewWord() {
-    word = allowedWords[Math.floor(Math.random() * allowedWords.length)];
-    console.log(`Today's Word: ${word}`);
+    if (mode === 'game') {
+        word = allowedWords[Math.floor(Math.random() * allowedWords.length)];
+        console.log(`Today's Word: ${word}`);
+    } else if (mode === 'solo') {
+        const today = new Date();
+        const startDate = new Date('2025-05-03');
+        const dayIndex = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+        const index = dayIndex % allowedWords.length;
+        word = allowedWords[index];
+        console.log(`Today's Word: ${word}`);
+    } else {
+        console.error("Unrecognized game mode:", mode);
+    }
 }
 
 function createSquares() {
@@ -273,6 +283,7 @@ function showEndScreen(won) {
         row.textContent = guessArr.join("").toUpperCase();
         endGuesses.appendChild(row);
     });
+
 }
 document.getElementById("restart-btn").addEventListener("click", () => {
     location.reload();
