@@ -4,28 +4,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>"Words"</title>
-
+    <title>ChiGame Words - Daily Challenge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="game.css">
     <script defer src="solo.js"></script>
 </head>
 
 <body>
-    <!--Add Nav Bar from Chi game-->
-
-    <!--How to Play Banner for the time being-->
-    <div id="banner">
-        <button id="how-to-play-btn">How to Play</button>
-    </div>
-
     <div id="notification-wrapper">
         <div id="notification"></div>
     </div>
 
     <div id="container">
-        <div id="title">
-            <h1 class="name">"Words"</h1>
-            <a href="index.html">Back</a>
+        <div id="header">
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">Home</a>
+                <button id="how-to-play-btn" class="nav-btn">How to Play</button>
+            </div>
+            <div class="logo-title">
+                <h1 class="name">WORDS <span class="daily">DAILY</span></h1>
+            </div>
         </div>
 
         <div id="streak">
@@ -35,8 +35,6 @@
         <div id="board-container">
             <div id="board"></div>
         </div>
-
-
 
         <div id="keyboard-container">
             <div class="keyboard-row">
@@ -77,15 +75,14 @@
                 <button data-key="m">m</button>
                 <button data-key="del" class="wide">Del</button>
             </div>
-
         </div>
     </div>
 
     <div id="how-to-play-text" class="side-panel hidden">
-        <h3>How to Play "Words"!</h3>
+        <h3>How to Play WORDS Daily</h3>
         <p>Guess the 5-letter secret word in 6 tries or fewer.</p>
-        <p>Try to guess the word in the least number of attempts</p>
-        <p>Keep the longest daily streak for guessing the word correctly</p>
+        <p>Every player worldwide gets the same daily word.</p>
+        <p>Come back each day for a new challenge!</p>
         <br>
         <h4>How to Play</h4>
         <p>Each guess must be a valid 5-letter English word. Press Enter to submit a guess.
@@ -94,7 +91,7 @@
         <ul>
             <li>Green: The letter is correct and in the correct position.</li>
             <li>Yellow: The letter is in the word but in the wrong position.</li>
-            <li>White: The letter is not in the word at all.</li>
+            <li>Gray: The letter is not in the word at all.</li>
         </ul>
         <br>
         <h4>Additional Rules</h4>
