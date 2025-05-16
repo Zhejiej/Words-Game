@@ -1,10 +1,20 @@
 window.addEventListener("load", async () => {
-    await loadWords();
-    createSquares();
-    getNewWord();
-    setupKeyboard();
-    handlePhysicalKeyboardInput();
+    const modal = document.getElementById("word-length-modal");
+    const selector = document.getElementById("word-length-selector");
+    const startBtn = document.getElementById("start-game-btn");
+    
+    startBtn.addEventListener("click", async () => {
+        wordLength = parseInt(selector.value);
+        modal.style.display = "none";
+
+        await loadWords();
+        createSquares();
+        getNewWord();
+        setupKeyboard();
+        handlePhysicalKeyboardInput();
+    });
 });
+
 
 const howToPlayBtn = document.getElementById('how-to-play-btn');
 const howToPlayText = document.getElementById('how-to-play-text');
@@ -33,7 +43,7 @@ const COLOR_OFF = "rgb(181, 159, 59)";
 const COLOR_WRONG = "rgb(40, 58, 60)";
 
 function loadWords() {
-    return fetch('WORDS.txt')
+    return fetch(`${wordLength}WORDS.txt`)
         .then(response => response.text())
         .then(text => {
             allowedWords = text.split('\n').map(w => w.trim().toLowerCase());
@@ -62,12 +72,19 @@ function getNewWord() {
 function createSquares() {
     const gameBoard = document.getElementById("board");
 
-    for (let index = 0; index < 30; index++) {
+    //set size based on word-legnth
+    gameBoard.style.display = "grid";
+    gameBoard.style.gridTemplateColumns = `repeat(${wordLength}, 1fr)`;
+    gameBoard.style.gap = "5px";
+    const totalTiles = wordLength * 6;
+    for (let index = 0; index < totalTiles; index++) {
         let square = document.createElement("div");
         square.classList.add("square");
+        square.classList.add("animate__animated");
         square.setAttribute("id", index + 1);
         gameBoard.appendChild(square);
     }
+
 }
 
 function setupKeyboard() {
@@ -118,7 +135,7 @@ function getCurrentWordArr() {
 function updateGuessedWords(letter) {
     const currentWordArr = getCurrentWordArr();
 
-    if (currentWordArr && currentWordArr.length < 5) {
+    if (currentWordArr && currentWordArr.length < wordLength) {
         currentWordArr.push(letter);
 
         const availableSpaceEl = document.getElementById(String(availableSpace));
@@ -192,8 +209,8 @@ async function handleSubmitWord() {
     }
     const currentWordArr = getCurrentWordArr();
 
-    if (currentWordArr.length !== 5) {
-        showNotification("Word must be 5 letters");
+    if (currentWordArr.length !== wordLength) {
+        showNotification(`Word must be ${wordLength} letters`);
         shakeRow(guessedWordCount);
         return;
     }
@@ -205,7 +222,7 @@ async function handleSubmitWord() {
         return;
     }
 
-    const firstLetterId = guessedWordCount * 5 + 1;
+    const firstLetterId = guessedWordCount * wordLength + 1;
     const interval = 200;
 
     currentWordArr.forEach((letter, index) => {
@@ -290,8 +307,8 @@ document.getElementById("restart-btn").addEventListener("click", () => {
 });
 
 function shakeRow(rowIndex) {
-    for (let i = 0; i < 5; i++) {
-        const tile = document.getElementById(rowIndex * 5 + i + 1);
+    for (let i = 0; i < wordLength; i++) {
+        const tile = document.getElementById(rowIndex * wordLength + i + 1);
         tile.classList.add("shake");
         setTimeout(() => tile.classList.remove("shake"), 500);
     }
