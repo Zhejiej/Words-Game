@@ -249,6 +249,7 @@ h1 {
     font-size: 1.1rem;
     margin-bottom: 1rem;
     color: var(--primary);
+    text-shadow: 2px 2px 0 black;
 }
 
 #how-to-play-text h4 {
@@ -287,6 +288,7 @@ h1 {
 
 .hidden {
     display: none;
+    pointer-events: none;
 }
 
 .visible {
