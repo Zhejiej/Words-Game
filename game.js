@@ -1,4 +1,3 @@
-//Set up game
 window.addEventListener("load", async () => {
     await loadWords();
     createSquares();
@@ -10,7 +9,6 @@ window.addEventListener("load", async () => {
 const howToPlayBtn = document.getElementById('how-to-play-btn');
 const howToPlayText = document.getElementById('how-to-play-text');
 
-//Opens and closes how to play text
 howToPlayBtn.addEventListener('click', () => {
     howToPlayText.classList.toggle('visible');
     howToPlayText.classList.toggle('hidden');
@@ -21,7 +19,6 @@ howToPlayBtn.addEventListener('click', () => {
         howToPlayBtn.textContent = "How to Play ▼";
     }
 });
-
 let guessedWords = [[]];
 let availableSpace = 1;
 let word = "";
@@ -35,8 +32,6 @@ const COLOR_CORRECT = "rgb(83, 141, 78)";
 const COLOR_OFF = "rgb(181, 159, 59)";
 const COLOR_WRONG = "rgb(40, 58, 60)";
 
-
-//Loads the words from WORDS.txt to the game
 function loadWords() {
     return fetch('WORDS.txt')
         .then(response => response.text())
@@ -48,7 +43,6 @@ function loadWords() {
         });
 }
 
-//Get a new word to solve
 function getNewWord() {
     if (mode === 'game') {
         word = allowedWords[Math.floor(Math.random() * allowedWords.length)];
@@ -65,20 +59,17 @@ function getNewWord() {
     }
 }
 
-//Create boxes/grid for the board container
 function createSquares() {
     const gameBoard = document.getElementById("board");
 
     for (let index = 0; index < 30; index++) {
         let square = document.createElement("div");
         square.classList.add("square");
-        square.classList.add("animate__animated");
         square.setAttribute("id", index + 1);
         gameBoard.appendChild(square);
     }
 }
 
-//Sends key to board when pressed on the screen
 function setupKeyboard() {
     const keys = document.querySelectorAll(".keyboard-row button");
     for (let i = 0; i < keys.length; i++) {
@@ -100,7 +91,6 @@ function setupKeyboard() {
     }
 }
 
-//Sends key to board when pressed on your physical keyboard
 function handlePhysicalKeyboardInput() {
     document.addEventListener('keydown', (e) => {
         const key = e.key.toLowerCase();
@@ -120,14 +110,11 @@ function handlePhysicalKeyboardInput() {
         }
     });
 }
-
-//Returns current word you're ussing
 function getCurrentWordArr() {
     const numberOfGuessedWords = guessedWords.length;
     return guessedWords[numberOfGuessedWords - 1];
 }
 
-//Checks if there is space and adds letter to current word
 function updateGuessedWords(letter) {
     const currentWordArr = getCurrentWordArr();
 
@@ -137,10 +124,11 @@ function updateGuessedWords(letter) {
         const availableSpaceEl = document.getElementById(String(availableSpace));
         availableSpace = availableSpace + 1;
         availableSpaceEl.textContent = letter.toUpperCase();
+        availableSpaceEl.classList.add("pop-in");
+        setTimeout(() => availableSpaceEl.classList.remove("pop-in"), 200);
     }
 }
 
-//Deletes one letter from current word
 function handleDeleteLetter() {
     const currentWordArr = getCurrentWordArr();
     if (!currentWordArr.length) return;
@@ -153,11 +141,14 @@ function handleDeleteLetter() {
 
     const lastLetterEl = document.getElementById(String(availableSpace));
     if (lastLetterEl) {
+        lastLetterEl.classList.add("pop-out");
+        setTimeout(() => {
+            lastLetterEl.classList.remove("pop-out");
+        }, 150);
         lastLetterEl.textContent = "";
     }
 }
 
-//Get tile colors for each letter of the solutionWord
 function getTileColor(letter, index) {
     const isCorrectLetter = word.includes(letter);
 
@@ -175,7 +166,6 @@ function getTileColor(letter, index) {
     return COLOR_OFF;
 }
 
-//Check if Word is a Valid Word
 async function isValidWord(word) {
     const word_url = url + word;
     try {
@@ -183,6 +173,7 @@ async function isValidWord(word) {
 
         if (response.status === 404) {
             showNotification(`"${word}" Is Not A Valid Word.`);
+            shakeRow(guessedWordCount);
             return false;
         }
 
@@ -195,7 +186,6 @@ async function isValidWord(word) {
     }
 }
 
-//Handles running the submission of each word
 async function handleSubmitWord() {
     if (gameOver) {
         return;
@@ -204,6 +194,7 @@ async function handleSubmitWord() {
 
     if (currentWordArr.length !== 5) {
         showNotification("Word must be 5 letters");
+        shakeRow(guessedWordCount);
         return;
     }
 
@@ -217,14 +208,12 @@ async function handleSubmitWord() {
     const firstLetterId = guessedWordCount * 5 + 1;
     const interval = 200;
 
-    //Adds the Keyboard color + effects
     currentWordArr.forEach((letter, index) => {
         setTimeout(() => {
             const tileColor = getTileColor(letter, index);
 
             const letterId = firstLetterId + index;
             const letterEl = document.getElementById(letterId);
-            letterEl.classList.add("animate__flipInX");
             letterEl.style = `background-color:${tileColor};border-color:${tileColor}`;
 
             //change on-web keyboard color
@@ -243,23 +232,21 @@ async function handleSubmitWord() {
 
     guessedWordCount += 1;
 
-    //game end
     if (currentWord === word) {
         showNotification("Congratulations! 🎉");
         gameOver = true;
         setTimeout(() => {
             showEndScreen(true);
-            sendGameResultToBackend(true, guessedWordCount);
         }, 1500);
         return;
     }
 
+
     if (guessedWords.length === 6) {
-        showNotification(`Sorry, you have no more guesses! The word was "${word}".`);
+        showNotification(`The word was "${word}"`);
         gameOver = true;
         setTimeout(() => {
             showEndScreen(false);
-            sendGameResultToBackend(false, guessedWords.length);
         }, 1500);
         return;
     }
@@ -267,16 +254,14 @@ async function handleSubmitWord() {
     guessedWords.push([]);
 }
 
-//Show Notification
 function showNotification(message, duration = 1000) {
     const notification = document.getElementById("notification");
     notification.textContent = message;
+
     notification.classList.add("show");
-    notification.classList.remove("hidden");
 
     setTimeout(() => {
         notification.classList.remove("show");
-        notification.classList.add("hidden");
     }, duration);
 }
 
@@ -285,6 +270,9 @@ function showEndScreen(won) {
     const endTitle = document.getElementById("end-title");
     const endMessage = document.getElementById("end-message");
     const endGuesses = document.getElementById("end-guesses");
+
+    endScreen.classList.remove("hidden");
+    endScreen.classList.add("visible");
 
     endTitle.textContent = won ? "You Won! 🎉" : "Game Over";
     endMessage.textContent = won ? "Nice job!" : `The word was "${word}"`;
@@ -296,75 +284,15 @@ function showEndScreen(won) {
         endGuesses.appendChild(row);
     });
 
-    endScreen.classList.remove("hidden");
 }
-
 document.getElementById("restart-btn").addEventListener("click", () => {
     location.reload();
 });
 
-// Send game results to backend
-function sendGameResultToBackend(won, attempts) {
-    const payload = {
-        word: word,
-        won: won,
-        attempts: attempts,
-        guesses: guessedWords.map(arr => arr.join('').toLowerCase())
-    };
-    
-    fetch('/api/word/result/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload),
-        credentials: 'include' // This sends cookies with the request
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Game result recorded:', data);
-        showBackendNotification('Game result sent to ChiGame!');
-    })
-    .catch(error => {
-        console.error('Error recording game result:', error);
-        showBackendNotification('Failed to send result to ChiGame', true);
-    });
-}
-
-// Show notification for backend communication
-function showBackendNotification(message, isError = false) {
-    // Create notification element if it doesn't exist
-    let backendNotification = document.getElementById('backend-notification');
-    if (!backendNotification) {
-        backendNotification = document.createElement('div');
-        backendNotification.id = 'backend-notification';
-        backendNotification.style.position = 'fixed';
-        backendNotification.style.bottom = '20px';
-        backendNotification.style.right = '20px';
-        backendNotification.style.padding = '10px 20px';
-        backendNotification.style.borderRadius = '5px';
-        backendNotification.style.color = 'white';
-        backendNotification.style.fontWeight = 'bold';
-        backendNotification.style.zIndex = '1000';
-        document.body.appendChild(backendNotification);
+function shakeRow(rowIndex) {
+    for (let i = 0; i < 5; i++) {
+        const tile = document.getElementById(rowIndex * 5 + i + 1);
+        tile.classList.add("shake");
+        setTimeout(() => tile.classList.remove("shake"), 500);
     }
-    
-    // Set color based on error status
-    backendNotification.style.backgroundColor = isError ? '#d9534f' : '#5cb85c';
-    
-    // Set message
-    backendNotification.textContent = message;
-    
-    // Show notification
-    backendNotification.style.display = 'block';
-    
-    // Hide after 3 seconds
-    setTimeout(() => {
-        backendNotification.style.display = 'none';
-    }, 3000);
 }
