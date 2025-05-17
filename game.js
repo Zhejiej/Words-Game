@@ -234,7 +234,7 @@ async function handleSubmitWord() {
 
             const letterId = firstLetterId + index;
             const letterEl = document.getElementById(letterId);
-            letterEl.style = `background-color:${tileColor};border-color:${tileColor}`;
+            letterEl.style = `background-color:${tileColor};border-color:${tileColor};color: white`; //keep white no matter light or dark mode
 
             //change on-web keyboard color
             const keyButton = document.querySelector(`[data-key="${letter}"]`);
@@ -245,6 +245,7 @@ async function handleSubmitWord() {
                 if (keyColor !== COLOR_CORRECT) {
                     keyButton.style.backgroundColor = tileColor;
                     keyButton.style.borderColor = tileColor;
+                    keyButton.style.color = "white"; //keep white no matter light or dark mode
                 }
             }
         }, interval * index);
