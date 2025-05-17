@@ -91,6 +91,7 @@ function setupKeyboard() {
     const keys = document.querySelectorAll(".keyboard-row button");
     for (let i = 0; i < keys.length; i++) {
         keys[i].onclick = ({ target }) => {
+            playSound(clickSound);
             const letter = target.getAttribute("data-key").toLowerCase();
 
             if (letter === "enter") {
@@ -111,6 +112,7 @@ function setupKeyboard() {
 function handlePhysicalKeyboardInput() {
     document.addEventListener('keydown', (e) => {
         const key = e.key.toLowerCase();
+        playSound(clickSound);
 
         if (key === "enter") {
             handleSubmitWord();
@@ -183,6 +185,7 @@ function getTileColor(letter, index) {
     return COLOR_OFF;
 }
 
+//Checks if word is Valid
 async function isValidWord(word) {
     const word_url = url + word;
     try {
@@ -251,6 +254,7 @@ async function handleSubmitWord() {
 
     if (currentWord === word) {
         showNotification("Congratulations! 🎉");
+        playSound(yaySound);
         gameOver = true;
         setTimeout(() => {
             showEndScreen(true);
@@ -261,6 +265,7 @@ async function handleSubmitWord() {
 
     if (guessedWords.length === 6) {
         showNotification(`The word was "${word}"`);
+        playSound(loseSound);
         gameOver = true;
         setTimeout(() => {
             showEndScreen(false);
@@ -271,6 +276,7 @@ async function handleSubmitWord() {
     guessedWords.push([]);
 }
 
+//Show Notification
 function showNotification(message, duration = 1000) {
     const notification = document.getElementById("notification");
     notification.textContent = message;
@@ -282,6 +288,7 @@ function showNotification(message, duration = 1000) {
     }, duration);
 }
 
+//End Screen
 function showEndScreen(won) {
     const endScreen = document.getElementById("end-screen");
     const endTitle = document.getElementById("end-title");
@@ -306,6 +313,7 @@ document.getElementById("restart-btn").addEventListener("click", () => {
     location.reload();
 });
 
+
 function shakeRow(rowIndex) {
     for (let i = 0; i < wordLength; i++) {
         const tile = document.getElementById(rowIndex * wordLength + i + 1);
@@ -314,7 +322,7 @@ function shakeRow(rowIndex) {
     }
 }
 
-
+//Settings Buttons and controls
 document.getElementById("settings-btn").addEventListener("click", toggleSettings);
 
 function toggleSettings() {
@@ -330,13 +338,33 @@ document.getElementById("colorblind-toggle").addEventListener("change", function
     document.body.classList.toggle("colorblind-mode", this.checked);
 });
 
+
+//Sound
+const muteToggle = document.getElementById("mute-toggle");
 const volumeSlider = document.getElementById("volume");
+const yaySound = new Audio('sound/yay.mp3');
+const loseSound = new Audio('sound/lose.mp3');
+const clickSound = new Audio('sound/click.mp3');
+
+yaySound.volume = volumeSlider.value / 100;
+loseSound.volume = volumeSlider.value / 100;
+clickSound.volume = volumeSlider.value / 100;
+
+function setVolume(volume) {
+    yaySound.volume = volume;
+    loseSound.volume = volume;
+    clickSound.volume = volume
+}
+
+function playSound(audio) {
+    if (!muteToggle.checked) {
+        audio.currentTime = 0;
+        audio.play();
+    }
+}
+
 volumeSlider.addEventListener("input", function () {
     const volume = this.value / 100;
+    setVolume(volume);
     console.log("Volume set to:", volume);
-});
-
-document.getElementById("mute-toggle").addEventListener("change", function () {
-    const muted = this.checked;
-    console.log("Muted:", muted);
 });
