@@ -15,19 +15,38 @@ window.addEventListener("load", async () => {
     });
 });
 
-
+//Buttons (How To Play and Settings)!
 const howToPlayBtn = document.getElementById('how-to-play-btn');
 const howToPlayText = document.getElementById('how-to-play-text');
+const settingsBtn = document.getElementById('settings-btn');
+const settingsScreen = document.getElementById('settings');
 
+// Handle How to Play toggle
 howToPlayBtn.addEventListener('click', () => {
-    howToPlayText.classList.toggle('visible');
-    howToPlayText.classList.toggle('hidden');
+    const isVisible = !howToPlayText.classList.contains('visible');
 
-    if (howToPlayText.classList.contains('visible')) {
-        howToPlayBtn.textContent = "How to Play ▲";
+    howToPlayText.classList.toggle('visible', isVisible);
+    howToPlayText.classList.toggle('hidden', !isVisible);
+
+    //Hide settings
+    settingsScreen.classList.add('hidden');
+
+    if (isVisible) {
+    howToPlayBtn.textContent = "How to Play ▲";
     } else {
-        howToPlayBtn.textContent = "How to Play ▼";
+    howToPlayBtn.textContent = "How to Play ▼";
     }
+});
+
+// Handle Settings toggle
+settingsBtn.addEventListener('click', () => {
+
+    settingsScreen.classList.toggle('hidden');
+
+    // Always hide How to Play
+    howToPlayText.classList.remove('visible');
+    howToPlayText.classList.add('hidden');
+    howToPlayBtn.textContent = "How to Play ▼";
 });
 let guessedWords = [[]];
 let availableSpace = 1;
@@ -323,13 +342,6 @@ function shakeRow(rowIndex) {
     }
 }
 
-//Settings Buttons and controls
-document.getElementById("settings-btn").addEventListener("click", toggleSettings);
-
-function toggleSettings() {
-    const settingsScreen = document.getElementById("settings");
-    settingsScreen.classList.toggle("hidden");
-}
 
 document.getElementById("dark-mode-toggle").addEventListener("change", function () {
     document.body.classList.toggle("dark-mode", this.checked);
