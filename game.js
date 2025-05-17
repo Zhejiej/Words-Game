@@ -2,7 +2,7 @@ window.addEventListener("load", async () => {
     const modal = document.getElementById("word-length-modal");
     const selector = document.getElementById("word-length-selector");
     const startBtn = document.getElementById("start-game-btn");
-    
+
     startBtn.addEventListener("click", async () => {
         wordLength = parseInt(selector.value);
         modal.style.display = "none";
@@ -313,3 +313,30 @@ function shakeRow(rowIndex) {
         setTimeout(() => tile.classList.remove("shake"), 500);
     }
 }
+
+
+document.getElementById("settings-btn").addEventListener("click", toggleSettings);
+
+function toggleSettings() {
+    const settingsScreen = document.getElementById("settings");
+    settingsScreen.classList.toggle("hidden");
+}
+
+document.getElementById("dark-mode-toggle").addEventListener("change", function () {
+    document.body.classList.toggle("dark-mode", this.checked);
+});
+
+document.getElementById("colorblind-toggle").addEventListener("change", function () {
+    document.body.classList.toggle("colorblind-mode", this.checked);
+});
+
+const volumeSlider = document.getElementById("volume");
+volumeSlider.addEventListener("input", function () {
+    const volume = this.value / 100;
+    console.log("Volume set to:", volume);
+});
+
+document.getElementById("mute-toggle").addEventListener("change", function () {
+    const muted = this.checked;
+    console.log("Muted:", muted);
+});
