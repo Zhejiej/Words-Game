@@ -187,22 +187,7 @@ function handleDeleteLetter() {
     }
 }
 
-function getTileColor(letter, index) {
-    const isCorrectLetter = word.includes(letter);
 
-    if (!isCorrectLetter) {
-        return COLOR_WRONG;
-    }
-
-    const letterInThatPosition = word.charAt(index);
-    const isCorrectPosition = letter === letterInThatPosition;
-
-    if (isCorrectPosition) {
-        return COLOR_CORRECT;
-    }
-
-    return COLOR_OFF;
-}
 
 //Checks if word is Valid
 async function isValidWord(word) {
@@ -246,25 +231,31 @@ async function handleSubmitWord() {
 
     const firstLetterId = guessedWordCount * wordLength + 1;
     const interval = 200;
+    
+    // Calculate the colors using the Wordle algorithm
+    const tileColors = calculateTileColors(currentWordArr, word);
 
+    // Apply the colors to the UI
     currentWordArr.forEach((letter, index) => {
         setTimeout(() => {
-            const tileColor = getTileColor(letter, index);
-
+            const tileColor = tileColors[index];
+            
             const letterId = firstLetterId + index;
             const letterEl = document.getElementById(letterId);
             letterEl.style = `background-color:${tileColor};border-color:${tileColor};color: white`; //keep white no matter light or dark mode
 
-            //change on-web keyboard color
+            // Update keyboard colors
             const keyButton = document.querySelector(`[data-key="${letter}"]`);
-            console.log('Key color:', keyButton);
             if (keyButton) {
-                const keyColor = keyButton.style.backgroundColor;
-
-                if (keyColor !== COLOR_CORRECT) {
-                    keyButton.style.backgroundColor = tileColor;
-                    keyButton.style.borderColor = tileColor;
-                    keyButton.style.color = "white"; //keep white no matter light or dark mode
+                // Only upgrade the key color (grey → yellow → green), never downgrade
+                const currentKeyColor = keyButton.style.backgroundColor;
+                
+                if (currentKeyColor !== COLOR_CORRECT) {
+                    if (currentKeyColor !== COLOR_OFF || tileColor === COLOR_CORRECT) {
+                        keyButton.style.backgroundColor = tileColor;
+                        keyButton.style.borderColor = tileColor;
+                        keyButton.style.color = "white"; //keep white no matter light or dark mode
+                    }
                 }
             }
         }, interval * index);
@@ -282,7 +273,6 @@ async function handleSubmitWord() {
         return;
     }
 
-
     if (guessedWords.length === 6) {
         showNotification(`The word was "${word}"`);
         playSound(loseSound);
@@ -294,6 +284,53 @@ async function handleSubmitWord() {
     }
 
     guessedWords.push([]);
+}
+
+/**
+ * Calculate tile colors using the standard Wordle algorithm
+ * @param {string[]} guess - Array of guess letters
+ * @param {string} target - Target word
+ * @returns {string[]} - Array of color values for each letter
+ */
+function calculateTileColors(guess, target) {
+    // Convert target to array for easier handling
+    const targetArr = target.split('');
+    const colors = Array(guess.length).fill(null);
+    
+    // Track which positions in target word are already matched (for green)
+    const targetUsed = Array(targetArr.length).fill(false);
+    
+    // First pass: find all green matches
+    for (let i = 0; i < guess.length; i++) {
+        if (guess[i] === targetArr[i]) {
+            colors[i] = COLOR_CORRECT; // Green
+            targetUsed[i] = true;
+        }
+    }
+    
+    // Second pass: find yellow and grey matches
+    for (let i = 0; i < guess.length; i++) {
+        if (colors[i] !== null) continue; // Skip already matched positions
+        
+        // Look for an unused match in the target word
+        let foundYellow = false;
+        
+        for (let j = 0; j < targetArr.length; j++) {
+            if (!targetUsed[j] && guess[i] === targetArr[j]) {
+                colors[i] = COLOR_OFF; // Yellow
+                targetUsed[j] = true;
+                foundYellow = true;
+                break;
+            }
+        }
+        
+        // If no unused match found, it's grey
+        if (!foundYellow) {
+            colors[i] = COLOR_WRONG; // Grey
+        }
+    }
+    
+    return colors;
 }
 
 //Show Notification
