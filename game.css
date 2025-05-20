@@ -98,6 +98,10 @@ main {
     justify-content: center;
 }
 
+#change-length-btn {
+    font-size: 0.8rem;
+}
+
 .nav-btn:hover {
     background-color: var(--primary-hover);
     transform: translateY(-2px);
