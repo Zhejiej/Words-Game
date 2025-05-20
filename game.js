@@ -49,6 +49,8 @@ settingsBtn.addEventListener('click', () => {
     howToPlayBtn.textContent = "How to Play ▼";
 });
 let guessedWords = [[]];
+let greenLetters = {};
+let yellowLetters = new Set();
 let availableSpace = 1;
 let word = "";
 let guessedWordCount = 0;
@@ -229,11 +231,38 @@ async function handleSubmitWord() {
         return;
     }
 
+    //hard mode
+    const hardToggle = document.getElementById("hard-mode-toggle");
+    if (hardToggle.checked) {
+        for (let index in greenLetters) {
+            if (currentWordArr[parseInt(index)] !== greenLetters[index]) {
+                showNotification(`Hard mode: Letter "${greenLetters[index].toUpperCase()}" must be in position ${parseInt(index) + 1}`);
+                shakeRow(guessedWordCount);
+                return;
+            }
+        }
+        for (let letter of yellowLetters) {
+            if (!currentWordArr.includes(letter)) {
+                showNotification(`Hard mode: Letter "${letter.toUpperCase()}" must be used`);
+                shakeRow(guessedWordCount);
+                return;
+            }
+        }
+    }
+
     const firstLetterId = guessedWordCount * wordLength + 1;
     const interval = 200;
     
     // Calculate the colors using the Wordle algorithm
     const tileColors = calculateTileColors(currentWordArr, word);
+    tileColors.forEach((color, index) => {
+        if (color === COLOR_CORRECT) {
+            greenLetters[index] = currentWordArr[index];
+        }
+        if (color === COLOR_OFF) {
+            yellowLetters.add(currentWordArr[index]);
+        }
+    });
 
     // Apply the colors to the UI
     currentWordArr.forEach((letter, index) => {
@@ -387,7 +416,10 @@ document.getElementById("dark-mode-toggle").addEventListener("change", function 
 document.getElementById("colorblind-toggle").addEventListener("change", function () {
     document.body.classList.toggle("colorblind-mode", this.checked);
 });
-
+//hard mode toggle
+document.getElementById("hard-mode-toggle").addEventListener("change", function () {
+    document.body.classList.toggle("hard-mode", this.checked);
+});
 
 //Sound
 const muteToggle = document.getElementById("mute-toggle");
