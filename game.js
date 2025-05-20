@@ -234,6 +234,7 @@ async function handleSubmitWord() {
     //hard mode
     const hardToggle = document.getElementById("hard-mode-toggle");
     if (hardToggle.checked) {
+        //check if all green letters are in the right position
         for (let index in greenLetters) {
             if (currentWordArr[parseInt(index)] !== greenLetters[index]) {
                 showNotification(`Hard mode: Letter "${greenLetters[index].toUpperCase()}" must be in position ${parseInt(index) + 1}`);
@@ -241,6 +242,7 @@ async function handleSubmitWord() {
                 return;
             }
         }
+        //check if all yellow letters in this guess
         for (let letter of yellowLetters) {
             if (!currentWordArr.includes(letter)) {
                 showNotification(`Hard mode: Letter "${letter.toUpperCase()}" must be used`);
@@ -255,7 +257,7 @@ async function handleSubmitWord() {
     
     // Calculate the colors using the Wordle algorithm
     const tileColors = calculateTileColors(currentWordArr, word);
-    tileColors.forEach((color, index) => {
+    tileColors.forEach((color, index) => {//add letters to colors array for hard mode
         if (color === COLOR_CORRECT) {
             greenLetters[index] = currentWordArr[index];
         }
