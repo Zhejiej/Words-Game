@@ -9,3 +9,6 @@ Sounds: free royalty from pixabay
 -https://pixabay.com/sound-effects/yay-92370/
 -https://pixabay.com/sound-effects/losing-horn-313723/
 -https://pixabay.com/sound-effects/keyboard-click-327728/
+
+Daily Word Function Inspiration:
+https://nullprogram.com/blog/2018/07/31/
