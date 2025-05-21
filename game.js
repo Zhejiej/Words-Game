@@ -186,7 +186,6 @@ function getNewWord() {
         const day = String(today.getDate()).padStart(2, '0');
         const dayIndex = parseInt(`${year}${month}${day}`, 10);
         index = hashInt(dayIndex) % allowedWords.length;
-        console.log(index);
         word = allowedWords[index];
         console.log(`Today's Word: ${word}`);
     } else {
