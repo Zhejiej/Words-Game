@@ -4,14 +4,20 @@ window.addEventListener("load", async () => {
     const startBtn = document.getElementById("start-game-btn");
 
     startBtn.addEventListener("click", async () => {
+        if(restoreGameState() && !changeLengthToggle){
+            return;
+        }
         // Reset game state if we're changing length in the middle of a game
         // Reset game state
+        const key = mode === 'solo' ? 'soloGameState' : 'dailyGameState';
+        localStorage.removeItem(key);
         guessedWords = [[]];
         greenLetters = {};
         yellowLetters = new Set();
         availableSpace = 1;
         guessedWordCount = 0;
         gameOver = false;
+        gameWon = false;
         
         // Clear the keyboard colors
         const keys = document.querySelectorAll(".keyboard-row button");
@@ -31,7 +37,43 @@ window.addEventListener("load", async () => {
         createSquares();
         getNewWord();
         setupKeyboard();
+        changeLengthToggle = false;
     });
+    if(restoreGameState()){
+        modal.style.display = "none"; //modal not shown on reload
+
+        //re set up board
+        await loadWords();
+        createSquares();
+        setupKeyboard();
+
+        // render guessed letters 
+        guessedWords.forEach((wordArr, rowIndex) => {
+            const colors = calculateTileColors(wordArr, word);
+            wordArr.forEach((letter, letterIndex) => {
+                const index = rowIndex * wordLength + letterIndex + 1;
+                const square = document.getElementById(index);
+                const tileColor = colors[letterIndex];
+                square.textContent = letter.toUpperCase();
+                square.style.backgroundColor = tileColor;
+                square.style.borderColor = tileColor;
+                square.style.color = "white";
+
+                const keyButton = document.querySelector(`[data-key="${letter}"]`);
+                if (keyButton && keyButton.style.backgroundColor !== COLOR_CORRECT) {
+                    if (keyButton.style.backgroundColor !== COLOR_OFF || tileColor === COLOR_CORRECT) {
+                        keyButton.style.backgroundColor = tileColor;
+                        keyButton.style.borderColor = tileColor;
+                        keyButton.style.color = "white";
+                    }
+                }
+            });
+        });
+        //handle game state saved at end of game
+        if(gameOver){
+            showEndScreen(gameWon);
+        }
+    }
 
     // Attach the single physical keyboard handler once after DOM is loaded
     document.addEventListener('keydown', gameKeyDownHandler);
@@ -80,6 +122,7 @@ function gameKeyDownHandler(e) {
 
 // Handle Change Length button
 changeLengthBtn.addEventListener('click', () => {
+    changeLengthToggle = true;
     const modal = document.getElementById("word-length-modal");
     const selector = document.getElementById("word-length-selector");
     
@@ -145,6 +188,8 @@ let word = "";
 let guessedWordCount = 0;
 let allowedWords = [];
 let gameOver = false;
+let gameWon = false;
+let changeLengthToggle = false;//boolean to check if modal was accessed by change length button. This alters how game state should respond.
 const url = "https://api.dictionaryapi.dev/api/v2/entries/en/";
 
 //color constants
@@ -379,6 +424,8 @@ async function handleSubmitWord() {
         showNotification("Congratulations! 🎉");
         playSound(yaySound);
         gameOver = true;
+        gameWon = true;
+        saveGameState();
         setTimeout(() => {
             showEndScreen(true);
         }, 1500);
@@ -389,6 +436,8 @@ async function handleSubmitWord() {
         showNotification(`The word was "${word}"`);
         playSound(loseSound);
         gameOver = true;
+        gameWon = false;
+        saveGameState();
         setTimeout(() => {
             showEndScreen(false);
         }, 1500);
@@ -396,6 +445,7 @@ async function handleSubmitWord() {
     }
 
     guessedWords.push([]);
+    saveGameState();
 }
 
 /**
@@ -479,6 +529,8 @@ function showEndScreen(won) {
 
 }
 document.getElementById("restart-btn").addEventListener("click", () => {
+    const key = mode === 'solo' ? 'soloGameState' : 'dailyGameState';
+    localStorage.removeItem(key);
     location.reload();
 });
 
@@ -533,3 +585,39 @@ volumeSlider.addEventListener("input", function () {
     setVolume(volume);
     console.log("Volume set to:", volume);
 });
+
+function saveGameState(){
+    const gameState = {
+        guessedWords, 
+        word,
+        wordLength,
+        guessedWordCount,
+        availableSpace,
+        greenLetters,
+        yellowLetters: Array.from(yellowLetters),
+        gameOver,
+        gameWon
+    };
+    const key = mode === 'solo' ? 'soloGameState' : 'dailyGameState';
+    localStorage.setItem(key, JSON.stringify(gameState));
+}
+
+function restoreGameState(){
+    const key = mode === 'solo' ? 'soloGameState' : 'dailyGameState';
+    const gameStateJSON = localStorage.getItem(key);
+    if(!gameStateJSON){
+        return false;
+    }
+    const parsedGS = JSON.parse(gameStateJSON);
+    guessedWords = parsedGS.guessedWords;
+    word = parsedGS.word;
+    wordLength = parsedGS.wordLength;
+    guessedWordCount = parsedGS.guessedWordCount;
+    availableSpace = parsedGS.availableSpace;
+    greenLetters = parsedGS.greenLetters;
+    yellowLetters = new Set(parsedGS.yellowLetters)
+    gameOver = parsedGS.gameOver;
+    gameWon = parsedGS.gameWon ?? false;
+
+    return true;
+}
