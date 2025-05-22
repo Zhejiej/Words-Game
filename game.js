@@ -73,7 +73,8 @@ window.addEventListener("load", async () => {
         changeLengthToggle = false;
     });
     if(restoreGameState()){
-        modal.style.display = "none"; //modal not shown on reload
+        closeModal(modal);
+        //modal.style.display = "none"; //modal not shown on reload
 
         //re set up board
         await loadWords();
@@ -279,6 +280,7 @@ function closeModal(modal) {
 
 // Handle Change Length button
 changeLengthBtn.addEventListener('click', (event) => {
+    changeLengthToggle = true;
     // Stop propagation to prevent document click from closing the modal
     event.stopPropagation();
     
