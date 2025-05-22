@@ -83,9 +83,10 @@ socket.on('opponentScored', ({ playerNum, score }) => {
 });
 
 
-socket.on('wordResult', ({ valid, reason, word, correct, colorMap }) => {
+socket.on('wordResult', ({ valid, reason, word, colorMap }) => {
     if (!valid) {
-        showNotification(reason);
+        showNotification("Invalid Word");
+        shakeRow(guessedWordCount);
         return;
     }
 
@@ -116,15 +117,10 @@ socket.on('wordResult', ({ valid, reason, word, correct, colorMap }) => {
     guessedWordCount++;
     guessedWords.push([]);
 
-    if (correct) {
-        showNotification("You Win! 🎉");
-        gameOver = true;
-        return;
-    }
-
     if (guessedWordCount === ROWS) {
         showNotification("Game Over.");
         gameOver = true;
+        socket.emit('lose', word);
     }
 });
 
@@ -145,14 +141,33 @@ socket.on('opponentGuess', ({ colorMap }) => {
 });
 
 
-socket.on('gameOver', ({ reason }) => {
-    clearInterval(timerInterval); // Stop the timer
-    showNotification(`Game Over: ${reason}`);
+socket.on('gameOver', ({ reason, win }) => {
+    clearInterval(timerInterval);
     gameOver = true;
 
+    let message = `Game Over: ${reason}`;
+    if (win === true) {
+        message += "You Win!";
+        showEndScreen(true);   // You won
+        playSound(yaySound);
+    } else if (win === false) {
+        message += "You Lose";
+        showEndScreen(false);  // You lost
+        playSound(loseSound);
+    } else {
+        message += "It's a draw!";
+        showEndScreen(null);   // Draw
+        playSound(drawSound);
+    }
+
+    showNotification(message);
+
     const timerElement = document.querySelector('#header h1:nth-of-type(2)');
-    timerElement.textContent = 'Game Over';
+    if (timerElement) {
+        timerElement.textContent = 'Game Over';
+    }
 });
+
 
 
 
@@ -175,6 +190,7 @@ function createSquares(boardId) {
     for (let index = 0; index < totalTiles; index++) {
         let square = document.createElement("div");
         square.classList.add("square");
+        square.classList.add("animate__animated");
         square.setAttribute("id", index + 1);
         board.appendChild(square);
     }
@@ -184,6 +200,7 @@ function setupKeyboard() {
     const keys = document.querySelectorAll(".keyboard-row button");
     for (let i = 0; i < keys.length; i++) {
         keys[i].onclick = ({ target }) => {
+            playSound(clickSound);
             const letter = target.getAttribute("data-key").toLowerCase();
 
             if (letter === "enter") {
@@ -204,6 +221,7 @@ function setupKeyboard() {
 function handlePhysicalKeyboardInput() {
     document.addEventListener('keydown', (e) => {
         const key = e.key.toLowerCase();
+        playSound(clickSound);
 
         if (key === "enter") {
             handleSubmitWord();
@@ -235,6 +253,8 @@ function updateGuessedWords(letter) {
         const availableSpaceEl = document.getElementById(String(availableSpace));
         availableSpace = availableSpace + 1;
         availableSpaceEl.textContent = letter.toUpperCase();
+        availableSpaceEl.classList.add("pop-in");
+        setTimeout(() => availableSpaceEl.classList.remove("pop-in"), 200);
     }
 }
 
@@ -243,7 +263,6 @@ function handleDeleteLetter() {
     const currentWordArr = getCurrentWordArr();
     if (!currentWordArr.length) return;
 
-
     if (availableSpace > 1) {
         availableSpace -= 1;
     }
@@ -251,7 +270,13 @@ function handleDeleteLetter() {
     currentWordArr.pop();
 
     const lastLetterEl = document.getElementById(String(availableSpace));
-    lastLetterEl.textContent = "";
+    if (lastLetterEl) {
+        lastLetterEl.classList.add("pop-out");
+        setTimeout(() => {
+            lastLetterEl.classList.remove("pop-out");
+        }, 150);
+        lastLetterEl.textContent = "";
+    }
 }
 
 
@@ -259,7 +284,11 @@ function handleSubmitWord() {
     if (gameOver) return;
 
     const currentWordArr = getCurrentWordArr();
-    if (currentWordArr.length !== WORD_LENGTH) return;
+    if (currentWordArr.length !== WORD_LENGTH) {
+        showNotification(`Word must be ${WORD_LENGTH} letters`);
+        shakeRow(guessedWordCount);
+        return;
+    }
 
     const currentWord = currentWordArr.join("").toLowerCase();
     socket.emit('submitWord', currentWord);
@@ -281,7 +310,7 @@ function startCountdownTimer(startTime, duration) {
 
         if (remaining <= 0) {
             clearInterval(timerInterval);
-            showNotification("⏰ Time's up!");
+            showNotification("Time's up!");
             gameOver = true;
         }
     }
@@ -300,4 +329,89 @@ function showNotification(message, duration = 1000) {
     setTimeout(() => {
         notification.classList.remove("show");
     }, duration);
+}
+
+
+const settingsBtn = document.getElementById('settings-btn');
+const settingsScreen = document.getElementById('settings');
+
+// Handle Settings toggle
+settingsBtn.addEventListener('click', () => {
+
+    settingsScreen.classList.toggle('hidden');
+});
+
+
+document.getElementById("dark-mode-toggle").addEventListener("change", function () {
+    document.body.classList.toggle("dark-mode", this.checked);
+});
+
+document.getElementById("colorblind-toggle").addEventListener("change", function () {
+    document.body.classList.toggle("colorblind-mode", this.checked);
+});
+
+//Sound
+const muteToggle = document.getElementById("mute-toggle");
+const volumeSlider = document.getElementById("volume");
+const yaySound = new Audio('sound/yay.mp3');
+const loseSound = new Audio('sound/lose.mp3');
+const drawSound = new Audio('sound/draw.mp3');
+
+const clickSound = new Audio('sound/click.mp3');
+
+yaySound.volume = volumeSlider.value / 100;
+loseSound.volume = volumeSlider.value / 100;
+clickSound.volume = volumeSlider.value / 100;
+
+function setVolume(volume) {
+    yaySound.volume = volume;
+    loseSound.volume = volume;
+    clickSound.volume = volume
+}
+
+function playSound(audio) {
+    if (!muteToggle.checked) {
+        audio.currentTime = 0;
+        audio.play();
+    }
+}
+
+volumeSlider.addEventListener("input", function () {
+    const volume = this.value / 100;
+    setVolume(volume);
+    console.log("Volume set to:", volume);
+});
+
+//End Screen
+function showEndScreen(won) {
+    const endScreen = document.getElementById("end-screen");
+    const endTitle = document.getElementById("end-title");
+    const endMessage = document.getElementById("end-message");
+
+    endScreen.classList.remove("hidden");
+    endScreen.classList.add("visible");
+
+    if (won === true) {
+        endTitle.textContent = "You Won!";
+        endMessage.textContent = "Nice job!";
+    } else if (won === false) {
+        endTitle.textContent = "You Lost";
+        endMessage.textContent = "You tried your best";
+    } else {
+        endTitle.textContent = "It's a Draw!";
+        endMessage.textContent = "try winning next time";
+    }
+
+    setTimeout(() => {
+        endScreen.classList.remove("visible");
+        endScreen.classList.add("hidden");
+    }, 10000);
+}
+
+function shakeRow(rowIndex) {
+    for (let i = 0; i < WORD_LENGTH; i++) {
+        const tile = document.getElementById(rowIndex * WORD_LENGTH + i + 1);
+        tile.classList.add("shake");
+        setTimeout(() => tile.classList.remove("shake"), 500);
+    }
 }

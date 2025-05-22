@@ -148,6 +148,7 @@ function handlePhysicalKeyboardInput() {
         }
     });
 }
+
 function getCurrentWordArr() {
     const numberOfGuessedWords = guessedWords.length;
     return guessedWords[numberOfGuessedWords - 1];

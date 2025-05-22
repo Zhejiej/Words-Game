@@ -63,12 +63,38 @@ io.on('connection', socket => {
 
         gameTimeout = setTimeout(() => {
             console.log("Game over due to timeout.");
-            players.forEach(({ socket }) => {
-                socket.emit('gameOver', { reason: "timeout" });
-            });
+
+            // Determine winner
+            const playersArr = Array.from(players.values());
+            if (playersArr.length === 2) {
+                const [player1, player2] = playersArr;
+                const result = player1.score > player2.score
+                    ? [true, false] // player1 won
+                    : player1.score < player2.score
+                        ? [false, true] // player2 won
+                        : [null, null]; // draw
+
+                player1.socket.emit('gameOver', {
+                    reason: "timeout",
+                    win: result[0],
+                });
+
+                player2.socket.emit('gameOver', {
+                    reason: "timeout",
+                    win: result[1],
+                });
+            } else {
+                // Only one player left – they win by default
+                playersArr[0].socket.emit('gameOver', {
+                    reason: "opponent disconnected ",
+                    win: true
+                });
+            }
+
             players.clear();
             gameTimeout = null;
         }, GAME_DURATION_MS);
+
     }
 
     socket.on('submitWord', async (submittedWord) => {
@@ -78,7 +104,7 @@ io.on('connection', socket => {
 
         const isValid = await isValidWord(submittedWord);
         if (!isValid) {
-            socket.emit('invalidWord', submittedWord);
+            socket.emit('wordResult', {valid: false});
             return;
         }
 
@@ -92,7 +118,10 @@ io.on('connection', socket => {
             console.log(`Player ${playerNum} advanced to wordIndex ${playerData.wordIndex}: "${nextWord}"`);
 
             if (!nextWord) {
-                socket.emit('gameOver', { reason: "no more words" });
+                socket.emit('gameOver', {
+                    reason: "no more words",
+                    win: true,
+                });
                 return;
             }
 
@@ -114,7 +143,6 @@ io.on('connection', socket => {
             // Send feedback to the submitting player
             socket.emit('wordResult', {
                 valid: true,
-                correct: false,
                 word: submittedWord,
                 colorMap
             });
@@ -123,10 +151,42 @@ io.on('connection', socket => {
             socket.broadcast.emit('opponentGuess', {
                 colorMap
             });
-            
+
         }
     });
 
+    socket.on('lose', (unsolvedWord) => {
+        const losingPlayer = players.get(socket.id);
+    
+        if (!losingPlayer) return;
+        console.log(`Player ${losingPlayer.playerNum} lost. Couldn't solve: ${unsolvedWord}`);
+    
+        // Get the other player
+        const otherPlayerEntry = Array.from(players.entries()).find(([id, data]) => id !== socket.id);
+    
+        if (otherPlayerEntry) {
+            const [opponentId, opponentData] = otherPlayerEntry;
+    
+            // Notify loser
+            losingPlayer.socket.emit('gameOver', {
+                reason: `You failed to solve the word "${unsolvedWord}"`,
+                win: false
+            });
+    
+            // Notify winner
+            opponentData.socket.emit('gameOver', {
+                reason: `Opponent failed to solve the word "${unsolvedWord}"`,
+                win: true
+            });
+        }
+
+        players.clear();
+        if (gameTimeout) {
+            clearTimeout(gameTimeout);
+            gameTimeout = null;
+        }
+    });
+    
 
     socket.on('disconnect', () => {
         const playerData = players.get(socket.id);
@@ -141,9 +201,12 @@ io.on('connection', socket => {
             clearTimeout(gameTimeout);
             gameTimeout = null;
 
-            // Notify any remaining player the game is over
+            // Notify other player the game is over
             players.forEach(({ socket }) => {
-                socket.emit('gameOver', { reason: "opponent disconnected" });
+                socket.emit('gameOver', {
+                    reason: "opponent disconnected",
+                    win: true,
+                });
             });
 
             players.clear();
@@ -152,6 +215,8 @@ io.on('connection', socket => {
     });
 });
 
+
+//Function Helpers
 
 function generateWordSequence() {
     const shuffled = [...words].sort(() => 0.5 - Math.random());
