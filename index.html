@@ -11,6 +11,51 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Press+Start+2P&display=swap"
         rel="stylesheet">
+    <!-- Immediately apply theme preference before page renders -->
+    <script>
+        // Run this immediately - before parsing HTML - to set theme
+        (function() {
+            // Keep document hidden until styles are fully loaded and applied
+            document.documentElement.style.visibility = 'hidden';
+            
+            // Apply theme settings from localStorage
+            try {
+                const saved = localStorage.getItem("gameSettings");
+                if (saved) {
+                    const settings = JSON.parse(saved);
+                    // Disable transitions while applying theme to prevent flash
+                    document.documentElement.classList.add('theme-transition-disabled');
+                    
+                    // Apply theme settings - add dark-mode class if darkMode setting is true
+                    if (settings.darkMode) {
+                        document.body.classList.add("dark-mode");
+                    } else {
+                        document.body.classList.remove("dark-mode");
+                    }
+                    
+                    if (settings.colorblindMode) {
+                        document.body.classList.add("colorblind-mode");
+                    }
+                }
+            } catch (e) {
+                console.error('Error applying theme:', e);
+            }
+            
+            // Make content visible once page has loaded
+            window.addEventListener('DOMContentLoaded', () => {
+                // Wait for styles to be fully applied
+                setTimeout(() => {
+                    // Make page visible
+                    document.documentElement.style.visibility = 'visible';
+                    
+                    // Re-enable transitions after a short delay
+                    setTimeout(() => {
+                        document.documentElement.classList.remove('theme-transition-disabled');
+                    }, 100);
+                }, 50);
+            });
+        })();
+    </script>
 </head>
 
 <body>
@@ -68,9 +113,49 @@
         </div>
 
         <footer>
+            <div class="settings">
+                <label class="theme-toggle">
+                    <input type="checkbox" id="dark-mode-toggle"> Light Mode
+                </label>
+            </div>
             <p>© 2025 WORDS - UNIVERSITY OF CHICAGO</p>
         </footer>
     </div>
+
+    <script>
+        // Theme toggle functionality
+        document.getElementById('dark-mode-toggle').addEventListener('change', function() {
+            document.body.classList.toggle('dark-mode', this.checked);
+            
+            // Save setting to localStorage
+            try {
+                const saved = localStorage.getItem("gameSettings");
+                let settings = saved ? JSON.parse(saved) : {};
+                settings.darkMode = this.checked;
+                localStorage.setItem("gameSettings", JSON.stringify(settings));
+            } catch (e) {
+                console.error('Error saving settings:', e);
+            }
+        });
+
+        // Load theme toggle setting from localStorage and apply it immediately
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const saved = localStorage.getItem("gameSettings");
+                if (saved) {
+                    const settings = JSON.parse(saved);
+                    // Set the checkbox state
+                    const checkbox = document.getElementById('dark-mode-toggle');
+                    checkbox.checked = settings.darkMode || false;
+                    
+                    // Make sure the class matches the checkbox state
+                    document.body.classList.toggle('dark-mode', checkbox.checked);
+                }
+            } catch (e) {
+                console.error('Error loading settings:', e);
+            }
+        });
+    </script>
 </body>
 
 </html>
