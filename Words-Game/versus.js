@@ -44,7 +44,6 @@ socket.on('correctGuess', ({ newWord, score }) => {
     guessedWords = [[]];
     guessedWordCount = 0;
     availableSpace = 1;
-    gameOver = false;
 
     const scoreElement = document.getElementById(`player1-score`);
     if (scoreElement) {
@@ -356,7 +355,6 @@ const volumeSlider = document.getElementById("volume");
 const yaySound = new Audio('sound/yay.mp3');
 const loseSound = new Audio('sound/lose.mp3');
 const drawSound = new Audio('sound/draw.mp3');
-
 const clickSound = new Audio('sound/click.mp3');
 
 yaySound.volume = volumeSlider.value / 100;
@@ -408,6 +406,7 @@ function showEndScreen(won) {
     }, 10000);
 }
 
+//Animation
 function shakeRow(rowIndex) {
     for (let i = 0; i < WORD_LENGTH; i++) {
         const tile = document.getElementById(rowIndex * WORD_LENGTH + i + 1);
