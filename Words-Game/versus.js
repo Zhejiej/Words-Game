@@ -34,7 +34,6 @@ socket.on('welcome', (data) => {
 });
 
 socket.on('startGame', ({ word: secret, startTime, duration }) => {
-    console.log('Secret word is:', secret);
     word = secret.toLowerCase();
     startCountdownTimer(startTime, duration);
 });
