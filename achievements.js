@@ -250,33 +250,325 @@ function renderAchievements() {
     });
 }
 
+// Helper function to get today's date string
+function getTodayDateString() {
+    return new Date().toISOString().split('T')[0];
+}
+
+// Helper function to get game statistics
+function getGameStats() {
+    try {
+        const saved = localStorage.getItem("gameStats");
+        return saved ? JSON.parse(saved) : {
+            streakData: [],
+            firstGuesses: [],
+            sixthSenseData: [],
+            totalGamesToday: 0,
+            lastPlayDate: null,
+            gameStartTime: null
+        };
+    } catch (e) {
+        console.error('Error loading game stats:', e);
+        return {
+            streakData: [],
+            firstGuesses: [],
+            sixthSenseData: [],
+            totalGamesToday: 0,
+            lastPlayDate: null,
+            gameStartTime: null
+        };
+    }
+}
+
+// Helper function to save game statistics
+function saveGameStats(stats) {
+    try {
+        localStorage.setItem("gameStats", JSON.stringify(stats));
+    } catch (e) {
+        console.error('Error saving game stats:', e);
+    }
+}
+
+// Helper function to update streak data
+function updateStreakData(won) {
+    const stats = getGameStats();
+    const today = getTodayDateString();
+    
+    // Remove today's entry if it exists (in case of multiple games per day)
+    stats.streakData = stats.streakData.filter(entry => entry.date !== today);
+    
+    // Add today's result
+    stats.streakData.push({
+        date: today,
+        won: won
+    });
+    
+    // Keep only last 365 days
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 365);
+    const cutoffString = cutoffDate.toISOString().split('T')[0];
+    
+    stats.streakData = stats.streakData.filter(entry => entry.date >= cutoffString);
+    
+    saveGameStats(stats);
+    return stats;
+}
+
+// Helper function to calculate current win streak
+function getCurrentWinStreak(streakData) {
+    if (!streakData || streakData.length === 0) return 0;
+    
+    // Sort by date descending
+    const sorted = streakData.slice().sort((a, b) => b.date.localeCompare(a.date));
+    
+    let streak = 0;
+    for (const entry of sorted) {
+        if (entry.won) {
+            streak++;
+        } else {
+            break;
+        }
+    }
+    
+    return streak;
+}
+
+// Helper function to track first guesses
+function trackFirstGuess(firstGuess) {
+    const stats = getGameStats();
+    const today = getTodayDateString();
+    
+    // Add today's first guess
+    stats.firstGuesses = stats.firstGuesses.filter(entry => entry.date !== today);
+    stats.firstGuesses.push({
+        date: today,
+        guess: firstGuess.toLowerCase()
+    });
+    
+    // Keep only last 7 days
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 7);
+    const cutoffString = cutoffDate.toISOString().split('T')[0];
+    
+    stats.firstGuesses = stats.firstGuesses.filter(entry => entry.date >= cutoffString);
+    
+    saveGameStats(stats);
+    return stats;
+}
+
+// Helper function to track sixth sense achievement
+function trackSixthSense(guessCount) {
+    const stats = getGameStats();
+    const today = getTodayDateString();
+    
+    // Add today's guess count if it's exactly 6
+    if (guessCount === 6) {
+        stats.sixthSenseData = stats.sixthSenseData.filter(entry => entry.date !== today);
+        stats.sixthSenseData.push({
+            date: today,
+            guessCount: 6
+        });
+        
+        // Keep only last 6 days
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - 6);
+        const cutoffString = cutoffDate.toISOString().split('T')[0];
+        
+        stats.sixthSenseData = stats.sixthSenseData.filter(entry => entry.date >= cutoffString);
+        
+        saveGameStats(stats);
+    }
+    
+    return stats;
+}
+
 // Check for achievements to unlock
 function checkForAchievements(gameState) {
-    // Example achievement checks based on game state
-    // This would be expanded with all the actual logic
+    if (!gameState) return;
     
+    console.log('=== ACHIEVEMENT CHECK START ===');
+    console.log('Game State:', gameState);
+    
+    const today = getTodayDateString();
+    const stats = getGameStats();
+    
+    // Update total games today counter
+    if (stats.lastPlayDate !== today) {
+        stats.totalGamesToday = 1;
+        stats.lastPlayDate = today;
+    } else {
+        stats.totalGamesToday++;
+    }
+    saveGameStats(stats);
+    
+    // 1. First Win - Win your first game
+    if (gameState.won) {
+        const userAchievements = loadUserAchievements();
+        if (!userAchievements['first_win']) {
+            unlockAchievement('first_win');
+        }
+    }
+    
+    // 2. First Try - Guess the word correctly on your first try
     if (gameState.won && gameState.guessCount === 1) {
         unlockAchievement('first_guess');
     }
     
+    // 3. Clutch Guess - Win on your very last guess
     if (gameState.won && gameState.guessCount === gameState.maxGuesses) {
         unlockAchievement('clutch_guess');
     }
     
-    // Tracking streaks would require checking dates in localStorage
-    
-    // Example for comeback achievement
-    if (gameState.won && gameState.guessHistory.length >= 3) {
+    // 4. Comeback - First three guesses have 0 correct or present letters but still win at the end
+    if (gameState.won && gameState.guessHistory && gameState.guessHistory.length >= 4) {
+        console.log('=== COMEBACK CHECK ===');
         const firstThreeGuesses = gameState.guessHistory.slice(0, 3);
-        const allZeroCorrect = firstThreeGuesses.every(guess => 
-            guess.every(letter => letter.state !== 'correct' && letter.state !== 'present'));
+        console.log('First 3 guesses for comeback:', firstThreeGuesses);
         
-        if (allZeroCorrect) {
+        let hasAnyCorrectOrPresent = false;
+        
+        for (let guessIndex = 0; guessIndex < firstThreeGuesses.length; guessIndex++) {
+            const guess = firstThreeGuesses[guessIndex];
+            for (let letterIndex = 0; letterIndex < guess.length; letterIndex++) {
+                const letter = guess[letterIndex];
+                console.log(`Comeback - Guess ${guessIndex + 1}, Letter ${letterIndex + 1}:`, letter);
+                
+                if (letter.state === 'correct' || letter.state === 'present') {
+                    hasAnyCorrectOrPresent = true;
+                    console.log('Comeback - Found correct/present letter, blocking achievement');
+                    break;
+                }
+            }
+            if (hasAnyCorrectOrPresent) break;
+        }
+        
+        console.log('Comeback - Has any correct/present in first 3:', hasAnyCorrectOrPresent);
+        
+        if (!hasAnyCorrectOrPresent) {
+            console.log('UNLOCKING: comeback');
             unlockAchievement('comeback');
         }
     }
     
-    // More achievement checks would be added here
+    // 5. Zero Green - Win a game without ever getting a green tile until the final guess
+    if (gameState.won && gameState.guessHistory && gameState.guessHistory.length > 1) {
+        console.log('=== ZERO GREEN CHECK ===');
+        const allButLastGuesses = gameState.guessHistory.slice(0, -1);
+        console.log('All but last guesses for zero green:', allButLastGuesses);
+        
+        let hasAnyGreenBeforeEnd = false;
+        
+        for (let guessIndex = 0; guessIndex < allButLastGuesses.length; guessIndex++) {
+            const guess = allButLastGuesses[guessIndex];
+            for (let letterIndex = 0; letterIndex < guess.length; letterIndex++) {
+                const letter = guess[letterIndex];
+                console.log(`Zero Green - Guess ${guessIndex + 1}, Letter ${letterIndex + 1}:`, letter);
+                
+                if (letter.state === 'correct') {
+                    hasAnyGreenBeforeEnd = true;
+                    console.log('Zero Green - Found green letter, blocking achievement');
+                    break;
+                }
+            }
+            if (hasAnyGreenBeforeEnd) break;
+        }
+        
+        console.log('Zero Green - Has any green before end:', hasAnyGreenBeforeEnd);
+        
+        if (!hasAnyGreenBeforeEnd) {
+            console.log('UNLOCKING: zero_green');
+            unlockAchievement('zero_green');
+        }
+    }
+    
+    // 6. Blacked Out - Lose a game with only gray tiles
+    if (!gameState.won && gameState.guessHistory) {
+        const allGrayTiles = gameState.guessHistory.every(guess =>
+            guess.every(letter => letter.state === 'absent')
+        );
+        
+        if (allGrayTiles) {
+            unlockAchievement('blacked_out');
+        }
+    }
+    
+    // 7. One and Done - Only make one total guess today — win or lose
+    if (stats.totalGamesToday === 1 && gameState.guessCount === 1) {
+        unlockAchievement('one_and_done');
+    }
+    
+    // 8. Freeze - Spend over an hour on one game
+    if (gameState.gameStartTime) {
+        const gameEndTime = Date.now();
+        const gameTimeMs = gameEndTime - gameState.gameStartTime;
+        const gameTimeHours = gameTimeMs / (1000 * 60 * 60);
+        
+        if (gameTimeHours > 1) {
+            unlockAchievement('freeze');
+        }
+    }
+    
+    // Update streak data for streak-based achievements
+    if (gameState.won) {
+        const updatedStats = updateStreakData(true);
+        const currentStreak = getCurrentWinStreak(updatedStats.streakData);
+        
+        // 9. One Week Streak - Play and win for 7 consecutive days
+        if (currentStreak >= 7) {
+            unlockAchievement('one_week_streak');
+        }
+        
+        // 10. One Month Streak - Play and win for 30 consecutive days
+        if (currentStreak >= 30) {
+            unlockAchievement('one_month_streak');
+        }
+        
+        // 11. One Year Streak - Play and win for 365 consecutive days
+        if (currentStreak >= 365) {
+            unlockAchievement('one_year_streak');
+        }
+        
+        // 12. Sixth Sense - Solve in exactly 6 guesses, 6 days in a row
+        if (gameState.guessCount === 6) {
+            const sixthSenseStats = trackSixthSense(6);
+            if (sixthSenseStats.sixthSenseData.length >= 6) {
+                const sorted = sixthSenseStats.sixthSenseData.slice().sort((a, b) => a.date.localeCompare(b.date));
+                let consecutive = true;
+                for (let i = 1; i < sorted.length; i++) {
+                    const prevDate = new Date(sorted[i-1].date);
+                    const currDate = new Date(sorted[i].date);
+                    const dayDiff = (currDate - prevDate) / (1000 * 60 * 60 * 24);
+                    if (dayDiff !== 1) {
+                        consecutive = false;
+                        break;
+                    }
+                }
+                if (consecutive) {
+                    unlockAchievement('sixth_sense');
+                }
+            }
+        }
+    } else {
+        updateStreakData(false);
+    }
+    
+    // 13. Gambler - Use the same first guess for a whole week
+    if (gameState.guessHistory && gameState.guessHistory.length > 0) {
+        const firstGuess = gameState.guessHistory[0].map(letter => letter.letter).join('');
+        const firstGuessStats = trackFirstGuess(firstGuess);
+        
+        if (firstGuessStats.firstGuesses.length >= 7) {
+            const allSameGuess = firstGuessStats.firstGuesses.every(entry => 
+                entry.guess === firstGuess.toLowerCase()
+            );
+            
+            if (allSameGuess) {
+                unlockAchievement('gambler');
+            }
+        }
+    }
+    
+    console.log('=== ACHIEVEMENT CHECK END ===');
 }
 
 // Initialize achievements
@@ -352,7 +644,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.addEventListener('gamewon', function(e) {
         if (e.detail) {
             checkForAchievements(e.detail);
-            unlockAchievement('first_win');
+        }
+    });
+    
+    document.body.addEventListener('gamelost', function(e) {
+        if (e.detail) {
+            checkForAchievements(e.detail);
         }
     });
 });
@@ -368,5 +665,12 @@ window.Achievements = {
     renderAchievements: renderAchievements,
     checkForAchievements: checkForAchievements,
     toggleAchievementsPanel: toggleAchievementsPanel,
-    closeAchievementsPanel: closeAchievementsPanel
+    closeAchievementsPanel: closeAchievementsPanel,
+    getGameStats: getGameStats,
+    saveGameStats: saveGameStats,
+    updateStreakData: updateStreakData,
+    getCurrentWinStreak: getCurrentWinStreak,
+    trackFirstGuess: trackFirstGuess,
+    trackSixthSense: trackSixthSense,
+    getTodayDateString: getTodayDateString
 }; 
