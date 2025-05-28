@@ -12,3 +12,5 @@ Sounds: free royalty from pixabay
 
 Daily Word Function Inspiration:
 https://nullprogram.com/blog/2018/07/31/
+
+Versus Mode: https://words-game-87vo.onrender.com/index.html
